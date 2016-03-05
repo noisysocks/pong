@@ -11,6 +11,25 @@
  * - ship it
  */
 
+var FIELD_WIDTH = 600
+var FIELD_HEIGHT = 400
+
+var BALL_WIDTH = 20
+var BALL_HEIGHT = 20
+var BALL_SPEED = 400
+
+var BAT_OFFSET = 280
+var BAT_WIDTH = 10
+var BAT_HEIGHT = 70
+var BAT_SPEED = 40
+var BAT_DAMPING = 57
+
+var KEY_UP = 38
+var KEY_DOWN = 40
+
+var BG_COLOR = '#fff'
+var FG_COLOR = '#666'
+
 var initialState = {
   ball: {
     x: 0,
@@ -30,25 +49,25 @@ var initialState = {
 }
 
 function tickBall(state, dt) {
-  var vx = Math.cos(state.a) * 400
-  var vy = Math.sin(state.a) * 400
+  var vx = Math.cos(state.a) * BALL_SPEED
+  var vy = Math.sin(state.a) * BALL_SPEED
   var x = state.x + vx * dt
   var y = state.y + vy * dt
   var a = state.a + state.va * dt
-  if (x > 300) {
-    x = 300
+  if (x > FIELD_WIDTH / 2) {
+    x = FIELD_WIDTH / 2
     a = Math.atan2(vy, -vx)
   }
-  if (x < -300) {
-    x = -300
+  if (x < -FIELD_WIDTH / 2) {
+    x = -FIELD_WIDTH / 2
     a = Math.atan2(vy, -vx)
   }
-  if (y > 200) {
-    y = 200
+  if (y > FIELD_HEIGHT / 2) {
+    y = FIELD_HEIGHT / 2
     a = Math.atan2(-vy, vx)
   }
-  if (y < -200) {
-    y = -200
+  if (y < -FIELD_HEIGHT / 2) {
+    y = -FIELD_HEIGHT / 2
     a = Math.atan2(-vy, vx)
   }
   return Object.assign({}, state, {
@@ -61,21 +80,21 @@ function tickBall(state, dt) {
 function tickPlayer(state, keys, dt) {
   var vy = state.vy
   var y = state.y + vy * dt
-  if (y < -200 + 35) {
-    y = -200 + 35
+  if (y < -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2) {
+    y = -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2
     vy = -vy
   }
-  if (y > 200 - 35) {
-    y = 200 - 35
+  if (y > FIELD_HEIGHT / 2 - BAT_HEIGHT / 2) {
+    y = FIELD_HEIGHT / 2 - BAT_HEIGHT / 2
     vy = -vy
   }
-  if (keys[38]) {
-    vy -= 40
+  if (keys[KEY_UP]) {
+    vy -= BAT_SPEED
   }
-  if (keys[40]) {
-    vy += 40
+  if (keys[KEY_DOWN]) {
+    vy += BAT_SPEED
   }
-  vy *= (0.95 / (1/60)) * dt
+  vy *= BAT_DAMPING * dt
   return Object.assign({}, state, {
     y: y,
     vy: vy
@@ -85,21 +104,21 @@ function tickPlayer(state, keys, dt) {
 function tickComputer(state, ballState, dt) {
   var vy = state.vy
   var y = state.y + vy * dt
-  if (y < -200 + 35) {
-    y = -200 + 35
+  if (y < -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2) {
+    y = -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2
     vy = -vy
   }
-  if (y > 200 - 35) {
-    y = 200 - 35
+  if (y > FIELD_HEIGHT / 2 - BAT_HEIGHT / 2) {
+    y = FIELD_HEIGHT / 2 - BAT_HEIGHT / 2
     vy = -vy
   }
   if (ballState.y < state.y) {
-    vy -= 40
+    vy -= BAT_SPEED
   }
   if (ballState.y > state.y) {
-    vy += 40
+    vy += BAT_SPEED
   }
-  vy *= (0.95 / (1/60)) * dt
+  vy *= BAT_DAMPING * dt
   return Object.assign({}, state, {
     y: y,
     vy: vy
@@ -135,24 +154,24 @@ function reducer (state, action) {
 function draw (state) {
   var ctx = document.getElementById('pong').getContext('2d') 
 
-  ctx.fillStyle = '#000'
-  ctx.fillRect(0, 0, 600, 400)
+  ctx.fillStyle = BG_COLOR
+  ctx.fillRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT)
 
   ctx.save()
-  ctx.translate(300, 200)
+  ctx.translate(FIELD_WIDTH / 2, FIELD_HEIGHT / 2)
 
   ctx.save()
   ctx.translate(state.ball.x, state.ball.y)
   ctx.rotate(state.ball.a)
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(-10, -10, 20, 20)
+  ctx.fillStyle = FG_COLOR
+  ctx.fillRect(-BALL_WIDTH / 2, -BALL_HEIGHT / 2, BALL_WIDTH, BALL_HEIGHT)
   ctx.restore()
 
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(-280, state.player.y - 35, 10, 70)
+  ctx.fillStyle = FG_COLOR
+  ctx.fillRect(-BAT_OFFSET, state.player.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
 
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(280, state.computer.y - 35, 10, 70)
+  ctx.fillStyle = FG_COLOR
+  ctx.fillRect(BAT_OFFSET, state.computer.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
 
   ctx.restore()
 }

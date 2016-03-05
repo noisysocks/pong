@@ -1,17 +1,17 @@
 body {
-  background: #001;
+  background: #fafafa;
   height: 100%;
   margin: 0;
   position: fixed;
   text-align: center;
   width: 100%;
-  color: #fff;
+  color: #666;
   font-family: Inconsolata, monospace;
   font-size: 18px;
 }
 
 a {
-  color: #fff;
+  color: #666;
 }
 
 #pong {
