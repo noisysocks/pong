@@ -1,6 +1,5 @@
 /*
  * TODO: 
- * - bounce ball off bats
  * - keep score
  * - make AI less whack
  * - make particles come out of the ball when it hits shit
@@ -11,19 +10,30 @@
  * - ship it
  */
 
-var FIELD_WIDTH = 600
-var FIELD_HEIGHT = 400
+var FIELD_WIDTH = 900
+var FIELD_HEIGHT = 600
 
 var BALL_SIZE = 20
 var BALL_SPEED = 400
 var BALL_CURVE = 0.002
 var BALL_MAX_VA = 2
+var BALL_INITIAL_ANGLE = Math.PI / 9
 
-var BAT_OFFSET = 280
+var BAT_OFFSET = FIELD_WIDTH / 2 - 20
 var BAT_WIDTH = 10
 var BAT_HEIGHT = 70
-var BAT_SPEED = 40
 var BAT_DAMPING = 57
+
+var PLAYER_SPEED = 40
+var COMPUTER_SPEED = 20
+var COMPUTER_ACTION_DISTANCE = 25
+
+var HOLD_TIME = 2
+
+var PARTICLE_SIZE = 2
+var PARTICLE_MIN_SPEED = 100
+var PARTICLE_MAX_SPEED = 300
+var NUM_PARTICLES = 200
 
 var KEY_UP = 38
 var KEY_DOWN = 40
@@ -32,10 +42,11 @@ var BG_COLOR = '#fff'
 var FG_COLOR = '#666'
 
 var initialState = {
+  hold: 0,
   ball: {
     x: 0,
     y: 0,
-    a: Math.PI / 4,
+    a: BALL_INITIAL_ANGLE,
     va: 0
   },
   player: {
@@ -46,60 +57,112 @@ var initialState = {
     y: 0,
     vy: 0
   },
+  particles: [],
   keys: {}
 }
 
-function tickBall(ball, player, computer, dt) {
-  var vx = Math.cos(ball.a) * BALL_SPEED
-  var vy = Math.sin(ball.a) * BALL_SPEED
-  var x = ball.x + vx * dt
-  var y = ball.y + vy * dt
-  var a = ball.a + ball.va * dt
-  var va = ball.va
+function makeRandom (seed) {
+  var m_w = seed
+  var m_z = 987654321
+  var mask = 0xffffffff
+  return function () {
+      m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask
+      m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask
+      var result = ((m_z << 16) + m_w) & mask
+      result /= 4294967296
+      return result + 0.5
+  }
+}
+
+function dedecimate (num) {
+  return +num.toString().replace('.', '')
+}
+
+function makeParticles(x, y, count, seed) {
+  var random = makeRandom(seed)
+  var particles = []
+  while (count-- > 0) {
+    particles.push({
+      x: x,
+      y: y,
+      a: random() * Math.PI * 2,
+      v: random() * (PARTICLE_MAX_SPEED - PARTICLE_MIN_SPEED) + PARTICLE_MIN_SPEED,
+      color: Math.floor(random() * 0xffffff)
+    })
+  }
+  return particles
+}
+
+function tickBall(state, dt) {
+  var vx = Math.cos(state.ball.a) * BALL_SPEED
+  var vy = Math.sin(state.ball.a) * BALL_SPEED
+  var x = state.ball.x + vx * dt
+  var y = state.ball.y + vy * dt
+  var a = state.ball.a + state.ball.va * dt
+  var va = state.ball.va
+  var particles = state.particles
+  if (state.hold > 0) {
+    return Object.assign({}, state, {
+      hold: state.hold - dt
+    })
+  }
   if (x > FIELD_WIDTH / 2) {
-    x = FIELD_WIDTH / 2
-    a = Math.atan2(vy, -vx)
+    return Object.assign({}, state, {
+      hold: HOLD_TIME,
+      ball: Object.assign({}, initialState.ball)
+    })
   }
   if (x < -FIELD_WIDTH / 2) {
-    x = -FIELD_WIDTH / 2
-    a = Math.atan2(vy, -vx)
+    return Object.assign({}, state, {
+      hold: HOLD_TIME,
+      ball: Object.assign({}, initialState.ball, {
+        a: Math.PI + BALL_INITIAL_ANGLE
+      })
+    })
   }
   if (y > FIELD_HEIGHT / 2 - BALL_SIZE / 2) {
     y = FIELD_HEIGHT / 2 - BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
+    particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
   if (y < -FIELD_HEIGHT / 2 + BALL_SIZE / 2) {
     y = -FIELD_HEIGHT / 2 + BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
+    particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
   if (
     x < -BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2 &&
     //x > -BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2 &&
-    y > player.y - BAT_HEIGHT / 2 &&
-    y < player.y + BAT_HEIGHT / 2 &&
+    y > state.player.y - BAT_HEIGHT / 2 &&
+    y < state.player.y + BAT_HEIGHT / 2 &&
     Math.cos(a) < 0
   ) {
     x = -BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2
     a = Math.atan2(vy, -vx)
-    va += player.vy * BALL_CURVE
+    va += state.player.vy * BALL_CURVE
+    particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
   if (
     x > BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2 &&
     //x < BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2 &&
-    y > computer.y - BAT_HEIGHT / 2 &&
-    y < computer.y + BAT_HEIGHT / 2 &&
+    y > state.computer.y - BAT_HEIGHT / 2 &&
+    y < state.computer.y + BAT_HEIGHT / 2 &&
     Math.cos(a) > 0
   ) {
     x = BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2
     a = Math.atan2(vy, -vx)
-    va += computer.vy * BALL_CURVE
+    va += state.computer.vy * BALL_CURVE
+    particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
   va = Math.max(Math.min(va, BALL_MAX_VA), -BALL_MAX_VA)
-  return Object.assign({}, ball, {
-    x: x,
-    y: y,
-    a: a,
-    va: va
+  return Object.assign({}, state, {
+    ball: Object.assign({}, state.ball, {
+      x: x,
+      y: y,
+      a: a,
+      va: va
+    }),
+    particles: particles
   })
 }
 
@@ -115,10 +178,10 @@ function tickPlayer(state, keys, dt) {
     vy = -vy
   }
   if (keys[KEY_UP]) {
-    vy -= BAT_SPEED
+    vy -= PLAYER_SPEED
   }
   if (keys[KEY_DOWN]) {
-    vy += BAT_SPEED
+    vy += PLAYER_SPEED
   }
   vy *= BAT_DAMPING * dt
   return Object.assign({}, state, {
@@ -138,17 +201,44 @@ function tickComputer(state, ballState, dt) {
     y = FIELD_HEIGHT / 2 - BAT_HEIGHT / 2
     vy = -vy
   }
-  if (ballState.y < state.y) {
-    vy -= BAT_SPEED
+  if (
+    Math.cos(ballState.a) > 0 &&
+    ballState.y < state.y - COMPUTER_ACTION_DISTANCE
+  ) {
+    vy -= COMPUTER_SPEED
   }
-  if (ballState.y > state.y) {
-    vy += BAT_SPEED
+  if (
+    Math.cos(ballState.a) > 0 &&
+    ballState.y > state.y + COMPUTER_ACTION_DISTANCE
+  ) {
+    vy += COMPUTER_SPEED
   }
   vy *= BAT_DAMPING * dt
   return Object.assign({}, state, {
     y: y,
     vy: vy
   })
+}
+
+function tickParticles (state, dt) {
+  var particles = []
+  state.forEach(function (particle) {
+    var vx = Math.cos(particle.a) * particle.v
+    var vy = Math.sin(particle.a) * particle.v
+    var x = particle.x + vx * dt
+    var y = particle.y + vy * dt
+    if (x > FIELD_WIDTH / 2 || x < -FIELD_WIDTH / 2) {
+      return
+    }
+    if (y > FIELD_HEIGHT / 2 || y < -FIELD_HEIGHT / 2) {
+      return
+    }
+    particles.push(Object.assign({}, particle, {
+      x: x,
+      y: y
+    }))
+  })
+  return particles
 }
 
 function reducer (state, action) {
@@ -158,10 +248,11 @@ function reducer (state, action) {
 
   switch (action.type) {
     case 'tick':
+      var state = Object.assign({}, state, tickBall(state, action.dt))
       return Object.assign({}, state, {
-        ball: tickBall(state.ball, state.player, state.computer, action.dt),
         player: tickPlayer(state.player, state.keys, action.dt),
-        computer: tickComputer(state.computer, state.ball, action.dt)
+        computer: tickComputer(state.computer, state.ball, action.dt),
+        particles: tickParticles(state.particles, action.dt),
       })
 
     case 'keyUp':
@@ -185,6 +276,11 @@ function draw (state) {
 
   ctx.save()
   ctx.translate(FIELD_WIDTH / 2, FIELD_HEIGHT / 2)
+
+  state.particles.forEach(function (particle) {
+    ctx.fillStyle = '#' + particle.color.toString(16)
+    ctx.fillRect(particle.x - PARTICLE_SIZE / 2, particle.y - PARTICLE_SIZE / 2, PARTICLE_SIZE, PARTICLE_SIZE)
+  })
 
   ctx.save()
   ctx.translate(state.ball.x, state.ball.y)
