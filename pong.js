@@ -14,9 +14,10 @@
 var FIELD_WIDTH = 600
 var FIELD_HEIGHT = 400
 
-var BALL_WIDTH = 20
-var BALL_HEIGHT = 20
+var BALL_SIZE = 20
 var BALL_SPEED = 400
+var BALL_CURVE = 0.002
+var BALL_MAX_VA = 2
 
 var BAT_OFFSET = 280
 var BAT_WIDTH = 10
@@ -35,7 +36,7 @@ var initialState = {
     x: 0,
     y: 0,
     a: Math.PI / 4,
-    va: 1
+    va: 0
   },
   player: {
     y: 0,
@@ -48,12 +49,13 @@ var initialState = {
   keys: {}
 }
 
-function tickBall(state, dt) {
-  var vx = Math.cos(state.a) * BALL_SPEED
-  var vy = Math.sin(state.a) * BALL_SPEED
-  var x = state.x + vx * dt
-  var y = state.y + vy * dt
-  var a = state.a + state.va * dt
+function tickBall(ball, player, computer, dt) {
+  var vx = Math.cos(ball.a) * BALL_SPEED
+  var vy = Math.sin(ball.a) * BALL_SPEED
+  var x = ball.x + vx * dt
+  var y = ball.y + vy * dt
+  var a = ball.a + ball.va * dt
+  var va = ball.va
   if (x > FIELD_WIDTH / 2) {
     x = FIELD_WIDTH / 2
     a = Math.atan2(vy, -vx)
@@ -62,18 +64,42 @@ function tickBall(state, dt) {
     x = -FIELD_WIDTH / 2
     a = Math.atan2(vy, -vx)
   }
-  if (y > FIELD_HEIGHT / 2) {
-    y = FIELD_HEIGHT / 2
+  if (y > FIELD_HEIGHT / 2 - BALL_SIZE / 2) {
+    y = FIELD_HEIGHT / 2 - BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
   }
-  if (y < -FIELD_HEIGHT / 2) {
-    y = -FIELD_HEIGHT / 2
+  if (y < -FIELD_HEIGHT / 2 + BALL_SIZE / 2) {
+    y = -FIELD_HEIGHT / 2 + BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
   }
-  return Object.assign({}, state, {
+  if (
+    x < -BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2 &&
+    //x > -BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2 &&
+    y > player.y - BAT_HEIGHT / 2 &&
+    y < player.y + BAT_HEIGHT / 2 &&
+    Math.cos(a) < 0
+  ) {
+    x = -BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2
+    a = Math.atan2(vy, -vx)
+    va += player.vy * BALL_CURVE
+  }
+  if (
+    x > BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2 &&
+    //x < BAT_OFFSET + BAT_WIDTH / 2 + BALL_SIZE / 2 &&
+    y > computer.y - BAT_HEIGHT / 2 &&
+    y < computer.y + BAT_HEIGHT / 2 &&
+    Math.cos(a) > 0
+  ) {
+    x = BAT_OFFSET - BAT_WIDTH / 2 - BALL_SIZE / 2
+    a = Math.atan2(vy, -vx)
+    va += computer.vy * BALL_CURVE
+  }
+  va = Math.max(Math.min(va, BALL_MAX_VA), -BALL_MAX_VA)
+  return Object.assign({}, ball, {
     x: x,
     y: y,
-    a: a
+    a: a,
+    va: va
   })
 }
 
@@ -133,7 +159,7 @@ function reducer (state, action) {
   switch (action.type) {
     case 'tick':
       return Object.assign({}, state, {
-        ball: tickBall(state.ball, action.dt),
+        ball: tickBall(state.ball, state.player, state.computer, action.dt),
         player: tickPlayer(state.player, state.keys, action.dt),
         computer: tickComputer(state.computer, state.ball, action.dt)
       })
@@ -164,14 +190,14 @@ function draw (state) {
   ctx.translate(state.ball.x, state.ball.y)
   ctx.rotate(state.ball.a)
   ctx.fillStyle = FG_COLOR
-  ctx.fillRect(-BALL_WIDTH / 2, -BALL_HEIGHT / 2, BALL_WIDTH, BALL_HEIGHT)
+  ctx.fillRect(-BALL_SIZE / 2, -BALL_SIZE / 2, BALL_SIZE, BALL_SIZE)
   ctx.restore()
 
   ctx.fillStyle = FG_COLOR
-  ctx.fillRect(-BAT_OFFSET, state.player.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
+  ctx.fillRect(-BAT_OFFSET - BAT_WIDTH / 2, state.player.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
 
   ctx.fillStyle = FG_COLOR
-  ctx.fillRect(BAT_OFFSET, state.computer.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
+  ctx.fillRect(BAT_OFFSET - BAT_WIDTH / 2, state.computer.y - BAT_HEIGHT / 2, BAT_WIDTH, BAT_HEIGHT)
 
   ctx.restore()
 }
