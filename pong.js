@@ -10,8 +10,9 @@
  * - ship it
  */
 
-var FIELD_WIDTH = 900
-var FIELD_HEIGHT = 600
+var GAME_WIDTH = 600
+var GAME_HEIGHT = 400
+var GAME_SCALE = 2
 
 var BALL_SIZE = 20
 var BALL_SPEED = 400
@@ -19,7 +20,7 @@ var BALL_CURVE = 0.002
 var BALL_MAX_VA = 2
 var BALL_INITIAL_ANGLE = Math.PI / 9
 
-var BAT_OFFSET = FIELD_WIDTH / 2 - 20
+var BAT_OFFSET = GAME_WIDTH / 2 - 20
 var BAT_WIDTH = 10
 var BAT_HEIGHT = 70
 var BAT_DAMPING = 57
@@ -106,13 +107,13 @@ function tickBall(state, dt) {
       hold: state.hold - dt
     })
   }
-  if (x > FIELD_WIDTH / 2) {
+  if (x > GAME_WIDTH / 2) {
     return Object.assign({}, state, {
       hold: HOLD_TIME,
       ball: Object.assign({}, initialState.ball)
     })
   }
-  if (x < -FIELD_WIDTH / 2) {
+  if (x < -GAME_WIDTH / 2) {
     return Object.assign({}, state, {
       hold: HOLD_TIME,
       ball: Object.assign({}, initialState.ball, {
@@ -120,13 +121,13 @@ function tickBall(state, dt) {
       })
     })
   }
-  if (y > FIELD_HEIGHT / 2 - BALL_SIZE / 2) {
-    y = FIELD_HEIGHT / 2 - BALL_SIZE / 2
+  if (y > GAME_HEIGHT / 2 - BALL_SIZE / 2) {
+    y = GAME_HEIGHT / 2 - BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
     particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
-  if (y < -FIELD_HEIGHT / 2 + BALL_SIZE / 2) {
-    y = -FIELD_HEIGHT / 2 + BALL_SIZE / 2
+  if (y < -GAME_HEIGHT / 2 + BALL_SIZE / 2) {
+    y = -GAME_HEIGHT / 2 + BALL_SIZE / 2
     a = Math.atan2(-vy, vx)
     particles = particles.concat(makeParticles(x, y, NUM_PARTICLES, dedecimate(a)))
   }
@@ -169,12 +170,12 @@ function tickBall(state, dt) {
 function tickPlayer(state, keys, dt) {
   var vy = state.vy
   var y = state.y + vy * dt
-  if (y < -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2) {
-    y = -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2
+  if (y < -GAME_HEIGHT / 2 + BAT_HEIGHT / 2) {
+    y = -GAME_HEIGHT / 2 + BAT_HEIGHT / 2
     vy = -vy
   }
-  if (y > FIELD_HEIGHT / 2 - BAT_HEIGHT / 2) {
-    y = FIELD_HEIGHT / 2 - BAT_HEIGHT / 2
+  if (y > GAME_HEIGHT / 2 - BAT_HEIGHT / 2) {
+    y = GAME_HEIGHT / 2 - BAT_HEIGHT / 2
     vy = -vy
   }
   if (keys[KEY_UP]) {
@@ -193,12 +194,12 @@ function tickPlayer(state, keys, dt) {
 function tickComputer(state, ballState, dt) {
   var vy = state.vy
   var y = state.y + vy * dt
-  if (y < -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2) {
-    y = -FIELD_HEIGHT / 2 + BAT_HEIGHT / 2
+  if (y < -GAME_HEIGHT / 2 + BAT_HEIGHT / 2) {
+    y = -GAME_HEIGHT / 2 + BAT_HEIGHT / 2
     vy = -vy
   }
-  if (y > FIELD_HEIGHT / 2 - BAT_HEIGHT / 2) {
-    y = FIELD_HEIGHT / 2 - BAT_HEIGHT / 2
+  if (y > GAME_HEIGHT / 2 - BAT_HEIGHT / 2) {
+    y = GAME_HEIGHT / 2 - BAT_HEIGHT / 2
     vy = -vy
   }
   if (
@@ -227,10 +228,10 @@ function tickParticles (state, dt) {
     var vy = Math.sin(particle.a) * particle.v
     var x = particle.x + vx * dt
     var y = particle.y + vy * dt
-    if (x > FIELD_WIDTH / 2 || x < -FIELD_WIDTH / 2) {
+    if (x > GAME_WIDTH / 2 || x < -GAME_WIDTH / 2) {
       return
     }
-    if (y > FIELD_HEIGHT / 2 || y < -FIELD_HEIGHT / 2) {
+    if (y > GAME_HEIGHT / 2 || y < -GAME_HEIGHT / 2) {
       return
     }
     particles.push(Object.assign({}, particle, {
@@ -272,10 +273,11 @@ function draw (state) {
   var ctx = document.getElementById('pong').getContext('2d') 
 
   ctx.fillStyle = BG_COLOR
-  ctx.fillRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT)
+  ctx.fillRect(0, 0, GAME_WIDTH * GAME_SCALE, GAME_HEIGHT * GAME_SCALE)
 
   ctx.save()
-  ctx.translate(FIELD_WIDTH / 2, FIELD_HEIGHT / 2)
+  ctx.scale(GAME_SCALE, GAME_SCALE)
+  ctx.translate(GAME_WIDTH / 2, GAME_HEIGHT / 2)
 
   state.particles.forEach(function (particle) {
     ctx.fillStyle = '#' + particle.color.toString(16)
