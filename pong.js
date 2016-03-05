@@ -1,10 +1,7 @@
 /*
  * TODO: 
- * - keep score
- * - make AI less whack
- * - make particles come out of the ball when it hits shit
- * - remove all the magic numbers everywhere
  * - split shit (esp. draw()) out into functions
+ * - mobile support
  * - clean up the tick functions
  * - run standard
  * - ship it
@@ -107,13 +104,13 @@ function tickBall(state, dt) {
       hold: state.hold - dt
     })
   }
-  if (x > GAME_WIDTH / 2) {
+  if (x > GAME_WIDTH / 2 + BALL_SIZE / 2) {
     return Object.assign({}, state, {
       hold: HOLD_TIME,
       ball: Object.assign({}, initialState.ball)
     })
   }
-  if (x < -GAME_WIDTH / 2) {
+  if (x < -GAME_WIDTH / 2 - BALL_SIZE / 2) {
     return Object.assign({}, state, {
       hold: HOLD_TIME,
       ball: Object.assign({}, initialState.ball, {
