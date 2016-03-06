@@ -1,0 +1,29 @@
+@import 'https://fonts.googleapis.com/css?family=Inconsolata';
+
+body {
+  background: #fafafa;
+  color: #666;
+  font-family: Inconsolata, monospace;
+  font-size: 18px;
+  height: 100%;
+  margin: 0;
+  position: fixed;
+  text-align: center;
+  width: 100%;
+}
+
+a {
+  color: #666;
+}
+
+#pong {
+  height: 100%;
+}
+
+.about {
+  bottom: 0;
+  left: 0;
+  padding: 4px;
+  position: absolute;
+  right: 0;
+}

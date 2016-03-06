@@ -1,0 +1,21 @@
+{
+  "name": "noisysocks-pong",
+  "version": "1.0.0",
+  "description": "",
+  "main": "pong.js",
+  "scripts": {
+    "start": "NODE_ENV=develop crunchicorn -wd src/pong.js dist/pong.js",
+    "build": "crunchicorn src/pong.js dist/pong.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "crunchicorn": "0.0.2"
+  },
+  "dependencies": {
+    "array-range": "^1.0.1",
+    "redux": "^3.3.1"
+  }
+}
