@@ -1,4 +1,10 @@
 import {
+  ACTION_TICK,
+  ACTION_KEY_DOWN,
+  ACTION_KEY_UP,
+  ACTION_TOUCH_DOWN,
+  ACTION_TOUCH_MOVE,
+  ACTION_TOUCH_UP,
   GAME_WIDTH,
   GAME_HEIGHT,
   BALL_SIZE,
@@ -10,7 +16,8 @@ import {
   BAT_WIDTH,
   BAT_HEIGHT,
   BAT_DAMPING,
-  PLAYER_SPEED,
+  PLAYER_KEY_SPEED,
+  PLAYER_TOUCH_SPEED,
   COMPUTER_SPEED,
   COMPUTER_ACTION_DISTANCE,
   HOLD_TIME,
@@ -40,7 +47,9 @@ const initialState = {
     vy: 0
   },
   particles: [],
-  keys: {}
+  keys: {},
+  touch: null,
+  lastTouch: null
 }
 
 function makeParticles (x, y, count, seed) {
@@ -135,7 +144,7 @@ function tickBall (state, dt) {
   })
 }
 
-function tickPlayer (player, keys, dt) {
+function tickPlayer (player, keys, touch, lastTouch, dt) {
   var vy = player.vy
   var y = player.y + vy * dt
 
@@ -151,11 +160,15 @@ function tickPlayer (player, keys, dt) {
     y = bottomY
   }
 
-  if (keys[KEY_UP]) {
-    vy -= PLAYER_SPEED
-  }
-  if (keys[KEY_DOWN]) {
-    vy += PLAYER_SPEED
+  if (keys[KEY_UP] || keys[KEY_DOWN]) {
+    if (keys[KEY_UP]) {
+      vy -= PLAYER_KEY_SPEED
+    }
+    if (keys[KEY_DOWN]) {
+      vy += PLAYER_KEY_SPEED
+    }
+  } else if (touch && lastTouch) {
+    vy += (touch.y - lastTouch.y) * PLAYER_TOUCH_SPEED
   }
 
   vy *= BAT_DAMPING * dt
@@ -215,20 +228,41 @@ function tickParticles (particles, dt) {
 
 export default function reducer (state = initialState, action) {
   switch (action.type) {
-    case 'tick':
+    case ACTION_TICK:
       const newState = Object.assign({}, state, tickBall(state, action.dt))
       return Object.assign({}, newState, {
-        player: tickPlayer(newState.player, newState.keys, action.dt),
+        player: tickPlayer(
+          newState.player,
+          newState.keys,
+          newState.touch,
+          newState.lastTouch,
+          action.dt
+        ),
         computer: tickComputer(newState.computer, newState.ball, action.dt),
         particles: tickParticles(newState.particles, action.dt)
       })
 
-    case 'keyUp':
-    case 'keyDown':
+    case ACTION_KEY_DOWN:
+    case ACTION_KEY_UP:
       return Object.assign({}, state, {
         keys: Object.assign({}, state.keys, {
-          [action.keyCode]: action.type === 'keyDown'
+          [action.keyCode]: action.type === ACTION_KEY_DOWN
         })
+      })
+
+    case ACTION_TOUCH_DOWN:
+      return Object.assign({}, state, {
+        touch: { x: action.x, y: action.y }
+      })
+    case ACTION_TOUCH_MOVE:
+      return Object.assign({}, state, {
+        touch: { x: action.x, y: action.y },
+        lastTouch: state.touch
+      })
+    case ACTION_TOUCH_UP:
+      return Object.assign({}, state, {
+        touch: null,
+        lastTouch: null
       })
 
     default:

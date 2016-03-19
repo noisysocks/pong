@@ -1,3 +1,10 @@
+export const ACTION_TICK = 'tick'
+export const ACTION_KEY_DOWN = 'keyDown'
+export const ACTION_KEY_UP = 'keyUp'
+export const ACTION_TOUCH_DOWN = 'touchDown'
+export const ACTION_TOUCH_MOVE = 'touchMove'
+export const ACTION_TOUCH_UP = 'touchUp'
+
 export const GAME_WIDTH = 600
 export const GAME_HEIGHT = 400
 export const GAME_SCALE = 2
@@ -13,7 +20,9 @@ export const BAT_WIDTH = 10
 export const BAT_HEIGHT = 70
 export const BAT_DAMPING = 57
 
-export const PLAYER_SPEED = 40
+export const PLAYER_KEY_SPEED = 40
+export const PLAYER_TOUCH_SPEED = 4
+
 export const COMPUTER_SPEED = 20
 export const COMPUTER_ACTION_DISTANCE = 25
 
