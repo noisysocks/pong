@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "crunchicorn": "0.0.2"
+    "crunchicorn": "0.0.3"
   },
   "dependencies": {
     "array-range": "^1.0.1",

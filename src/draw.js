@@ -34,7 +34,7 @@ export default function draw (state) {
   ctx.scale(GAME_SCALE, GAME_SCALE)
   ctx.translate(GAME_WIDTH / 2, GAME_HEIGHT / 2)
 
-  state.particles.forEach(particle => drawRect(
+  state.particles.forEach((particle) => drawRect(
     ctx,
     particle.x,
     particle.y,

@@ -195,7 +195,7 @@ function tickComputer (computer, ball, dt) {
 
 function tickParticles (particles, dt) {
   return particles
-    .map(particle => {
+    .map((particle) => {
       const vx = Math.cos(particle.a) * particle.v
       const vy = Math.sin(particle.a) * particle.v
       const x = particle.x + vx * dt
@@ -210,7 +210,7 @@ function tickParticles (particles, dt) {
 
       return Object.assign({}, particle, { x, y })
     })
-    .filter(p => p)
+    .filter((p) => p)
 }
 
 export default function reducer (state = initialState, action) {
