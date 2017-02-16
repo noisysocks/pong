@@ -1,6 +1,8 @@
 # noisysocks-pong
 
-A little curvy pong game to replace my otherwise boring homepage.
+![screenshot](http://i.imgur.com/tEJywb7.png)
+
+A little curvy pong game.
 
 ## Running
 
