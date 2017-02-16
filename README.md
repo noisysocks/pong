@@ -1,4 +1,4 @@
-# noisysocks-pong
+# pong
 
 ![screenshot](http://i.imgur.com/tEJywb7.png)
 
