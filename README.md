@@ -1,8 +1,14 @@
-# pong
+# http://noisysocks.com/pong/
 
-![screenshot](http://i.imgur.com/tEJywb7.png)
+![screenshot](http://i.imgur.com/d3BOrbV.png)
 
-A little curvy pong game.
+A little curvy pong game that you can totally play in your browser.
+
+Use the arrow keys to control your bat on the left. Strike the ball when your
+bat has some speed to make the ball curve up or down. Yell at your robot
+opponent to throw it off its game.
+
+❤️
 
 ## Running
 
