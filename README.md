@@ -1,4 +1,4 @@
-# http://noisysocks.com/pong/
+# Pong
 
 ![screenshot](http://i.imgur.com/d3BOrbV.png)
 
